@@ -34,7 +34,7 @@ class APUASYN20(Instrument):
         """ """
         if self._handle is not None:
             self.disconnect()
-        resource_name = f"TCPIP0::{self.id}::inst0::INSTR"
+        resource_name = f"USB0::0x03EB::0xAFFF::{self.id}::INSTR"
         try:
             self._handle = pyvisa.ResourceManager().open_resource(resource_name)
         except pyvisa.errors.VisaIOError as err:
@@ -110,3 +110,13 @@ class APUASYN20(Instrument):
             self._handle.write(f"OUTP ON")
         else:
             self._handle.write(f"OUTP OFF")
+
+    def setup_pulse_mod(self) -> bool:
+        """ """
+        self._handle.write(f":PULM:SOUR EXT")
+        self._handle.write(f":PULM:STAT ON")
+        time.sleep(APUASYN20.WAIT_TIME)
+        pulse_mode_src = str(self._handle.query(":PULM:SOUR?"))
+        pulse_mode_on = bool(self._handle.query(":PULM:STAT?"))
+
+        return (pulse_mode_src == "EXT") and pulse_mode_on
