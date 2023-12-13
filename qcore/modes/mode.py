@@ -28,6 +28,7 @@ class Mode(Resource):
         **parameters,
     ) -> None:
         """ """
+        self.octave_mixed: bool = False
         self.lo_name: str = str(lo_name)
         self.int_freq: float = int_freq
 

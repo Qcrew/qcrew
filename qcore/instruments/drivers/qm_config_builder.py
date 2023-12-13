@@ -1,10 +1,11 @@
 """ """
-
+import math
 from collections import defaultdict
-from typing import Any
+from typing import Any, Union
 
 import numpy as np
 
+from qcore.instruments.drivers.qm_octave_dummy import DummyOctave
 from qcore.modes.mode import Mode
 from qcore.modes.readout import Readout
 from qcore.helpers.logger import logger
@@ -13,6 +14,7 @@ from qcore.pulses.digital_waveform import DigitalWaveform
 from qcore.pulses.pulse import Pulse
 from qcore.pulses.readout_pulse import ReadoutPulse
 
+LO = Union[LMS, DummyOctave]
 
 class QMConfigBuildingError(Exception):
     """ """
@@ -87,6 +89,11 @@ class QMConfig(defaultdict):
 
         self["elements"][mode.name]["mixInputs"]["mixer"] = mixer_name
         logger.debug(f"Set {mode} {mixer_config = }.")
+
+    def set_octave_settings(self, octave_name: str, settings: dict) -> None:
+        if "octaves" not in self:
+            self["octaves"] = {}
+        self["octaves"][octave_name] = settings
 
     def set_time_of_flight(self, name: str, value: int) -> None:
         """ """
@@ -215,14 +222,30 @@ class QMConfig(defaultdict):
         mode_config = self["elements"][mode.name]
         port_config = (QMConfig.CONTROLLER_NAME, number)
         if key == "out":
-            mode_config["outputs"][key + str(number)] = port_config
+            if mode.octave_mixed:
+                self.set_mode_output_port_octave(mode, number)
+            else:
+                mode_config["outputs"][key + str(number)] = port_config
         elif key in ("I", "Q") and mode.has_mixed_inputs():
-            mode_config["mixInputs"][key] = port_config
+            if mode.octave_mixed:
+                self.set_mode_input_port_octave(mode, number)
+            else:
+                mode_config["mixInputs"][key] = port_config
         elif key == "I":
             mode_config["singleInput"]["port"] = port_config
         else:
             raise ValueError(f"Invalid port {key = } and {number = } for {mode}.")
         logger.debug(f"Set '{mode.name}' port {key = } and {number = }.")
+
+    def set_mode_output_port_octave(self, mode: Mode, number: int):
+        self["elements"][mode.name]["RF_outputs"]["port"] = (mode.lo_name, number)
+
+    def set_mode_input_port_octave(self, mode: Mode, number: int):
+        # OPX->Octave standard connectivity assumes:
+        #   OPX 1,2 = I,Q -> Octave 1
+        #   OPX 3,4 = I,Q -> Octave 2
+        #   ... etc
+        self["elements"][mode.name]["RF_inputs"]["port"] = (mode.lo_name, math.ceil(number / 2))
 
     def get_correction_matrix(self, g: float, p: float) -> list[float]:
         """ """
@@ -333,8 +356,9 @@ class QMConfigBuilder:
         self._config: QMConfig = None  # built by build_config()
         self._modes: tuple[Mode] = None
         self._lo_frequencies: dict[str, float] = {}
+        self._octaves: dict[str, DummyOctave] = {}
 
-    def build_config(self, modes: tuple[Mode], los: tuple[LMS]) -> QMConfig:
+    def build_config(self, modes: tuple[Mode], los: tuple[LO]) -> QMConfig:
         """ """
         try:
             self._check_modes(*modes)
@@ -349,7 +373,7 @@ class QMConfigBuilder:
 
     def _build_config(self) -> None:
         """ """
-        config, modes, lo_freqs = self._config, self._modes, self._lo_frequencies
+        config, modes, lo_freqs, octaves = self._config, self._modes, self._lo_frequencies, self._octaves
         config.set_version()
         config.set_controllers()
         for mode in modes:
@@ -357,12 +381,15 @@ class QMConfigBuilder:
             config.set_intermediate_frequency(mode.name, mode.int_freq)
 
             if mode.has_mixed_inputs():
-                if mode.lo_name not in lo_freqs:
-                    message = f"No LO frequency specified for {mode = }."
-                    raise QMConfigBuildingError(message)
-                lo_freq = lo_freqs[mode.lo_name]
-                config.set_lo_frequency(mode.name, lo_freq)
-                config.set_mixer(mode, mode.int_freq, lo_freq)
+                if mode.octave_mixed:
+                    config.set_octave_settings(mode.lo_name, self._octaves[mode.lo_name].settings)
+                else:
+                    if mode.lo_name not in lo_freqs:
+                        message = f"No LO frequency specified for {mode = }."
+                        raise QMConfigBuildingError(message)
+                    lo_freq = lo_freqs[mode.lo_name]
+                    config.set_lo_frequency(mode.name, lo_freq)
+                    config.set_mixer(mode, mode.int_freq, lo_freq)
 
             if isinstance(mode, Readout):
                 config.set_time_of_flight(mode.name, mode.tof)
@@ -384,11 +411,16 @@ class QMConfigBuilder:
             mode_names.append(name)
         self._modes = modes
 
-    def _check_local_oscillators(self, *los: LMS) -> None:
+    def _check_local_oscillators(self, *los: LO) -> None:
         """ """
         for lo in los:
-            try:
-                self._lo_frequencies[lo.name] = lo.frequency
-            except AttributeError:
-                message = f"Invalid {lo = }, missing 'name' and 'frequency' attributes."
-                raise QMConfigBuildingError(message) from None
+            # todo: currently, since los are remote objects, there is no way to
+            #  differentiate between a LMS and an Octave. We will assume for now
+            #  that an octave has "octave" in its name.
+            if "octave" in lo.name:
+                self._octaves[lo.name] = lo
+            # try:
+            #     self._lo_frequencies[lo.name] = lo.frequency
+            # except AttributeError:
+            #     message = f"Invalid {lo = }, missing 'name' and 'frequency' attributes."
+            #     raise QMConfigBuildingError(message) from None

@@ -12,6 +12,7 @@ from qcore.instruments.instrument import Instrument, ConnectionError
 from qcore.instruments.drivers.qm_config_builder import QMConfigBuilder, QMConfig
 from qcore.instruments.drivers.qm_result_fetcher import QMResultFetcher
 from qcore.instruments.drivers.vaunix_lms import LMS
+from qcore.instruments.drivers.qm_octave_dummy import DummyOctave
 from qcore.modes.mode import Mode
 
 
