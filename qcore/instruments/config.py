@@ -1,6 +1,7 @@
 """ QCREW's instrument config, a catalogue of all programmable instruments in our lab and their types and serial numbers """
 
-from qcore.instruments import *
+from qcore.instruments.peripherals import *
+from qcore.instruments.instrument import DummyInstrument
 
 
 class InstrumentConfig(dict):
@@ -17,4 +18,4 @@ class InstrumentConfig(dict):
         self[SA124] = ["19184645", "20234154"]
         self[LMS] = [str(id) for id in range(25330, 25338)]
         self[GS200] = ["90X823743", "91X336839"]
-        self[DummyInstrument] = ["0", "1", "2" , "3", "4", "5", "6", "7"]
+        self[DummyInstrument] = ["0", "1", "2", "3", "4", "5", "6", "7"]

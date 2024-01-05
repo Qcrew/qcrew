@@ -18,7 +18,9 @@ from qcore.resource import Resource
 
 # these imports are needed for yamlizing to work
 from qcore.modes import *
-from qcore.instruments import *
+from instruments import *
+from qcore.instruments.peripherals import *
+from qcore.instruments.controllers import *
 from qcore.pulses import *
 
 

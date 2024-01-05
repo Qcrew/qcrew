@@ -8,7 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
 
-from qcore.instruments import QM, SA124, LMS
+from qcore.instruments.controllers import QM
+from qcore.instruments.peripherals import SA124, LMS
 from qcore.modes.mode import Mode
 from qcore.pulses import ConstantPulse
 from qcore.helpers import Stage
