@@ -8,7 +8,7 @@ import numpy as np
 from qcore.modes.mode import Mode
 from qcore.modes.readout import Readout
 from qcore.helpers.logger import logger
-from qcore.instruments.drivers.vaunix_lms import LMS
+from qcore.instruments.peripherals.vaunix_lms import LMS
 from qcore.pulses.digital_waveform import DigitalWaveform
 from qcore.pulses.pulse import Pulse
 from qcore.pulses.readout_pulse import ReadoutPulse
@@ -29,11 +29,11 @@ class QMConfig(defaultdict):
     MIN_WAVEFORM_VOLTAGE: float = -0.5  # V
     MAX_WAVEFORM_VOLTAGE: float = 0.5
     MIN_MCM_VALUE: float = -2.0  # MCM means mixer correction matrix
-    MAX_MCM_VALUE: float = 2 - 2 ** -16
+    MAX_MCM_VALUE: float = 2 - 2**-16
     CLOCK_CYCLE: int = 4  # ns, also defined in qcore.pulses.pulse.Pulse
     MIN_TIME_OF_FLIGHT: int = 24  # ns
     MIN_PULSE_LENGTH: int = 16  # ns
-    MAX_PULSE_LENGTH: int = 2 ** 31 - 1  # ns
+    MAX_PULSE_LENGTH: int = 2**31 - 1  # ns
 
     def __init__(self) -> None:
         """ """
@@ -228,7 +228,7 @@ class QMConfig(defaultdict):
         """ """
         try:
             cos, sin = np.cos(p), np.sin(p)
-            coefficient = 1 / ((1 - g ** 2) * (2 * cos ** 2 - 1))
+            coefficient = 1 / ((1 - g**2) * (2 * cos**2 - 1))
         except TypeError:
             message = f"Invalid offset value(s): {g = }, {p = }, both must be {float}."
             raise ValueError(message) from None
@@ -379,7 +379,7 @@ class QMConfigBuilder:
                 raise QMConfigBuildingError(message)
             name = mode.name
             if name in mode_names:
-                message = (f"Found duplicate mode {name = }, names must be unique.")
+                message = f"Found duplicate mode {name = }, names must be unique."
                 raise QMConfigBuildingError(message)
             mode_names.append(name)
         self._modes = modes

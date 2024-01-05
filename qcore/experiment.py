@@ -10,7 +10,7 @@ import qm.qua as qua
 from qm.qua._dsl import _ProgramScope, _Variable, _ResultSource
 
 from qcore.instruments.instrument import Instrument
-from qcore.instruments import QM
+from qcore.instruments.controllers import QM
 from qcore.helpers.datasaver import Datasaver
 from qcore.helpers.logger import logger
 from qcore.helpers.plotter import Plotter
