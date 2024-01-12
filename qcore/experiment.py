@@ -229,6 +229,8 @@ class ExperimentManager:
 
             if dset.axes is None:
                 dset.initialize(axes=list(sweep_dict.values()))
+            else:
+                dset.initialize(axes=dset.axes)
 
 
 class Experiment:
