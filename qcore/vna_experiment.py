@@ -135,7 +135,7 @@ class VNAExperiment:
         """ """
         self.vna.powers = self.powers  # set input power on the VNA
         for rep in range(self.repetitions):
-            freqs, data = self.vna.sweep()
+            data = self.vna.sweep()
             saver.save_data(data, pos=(rep,))  # save to root group
             logger.info(f"Frequency sweep count = {rep+1} / {self.repetitions}")
 
@@ -152,8 +152,8 @@ class VNAExperiment:
             self.vna.powers = (p1, p2)  # set input power on the VNA
             logger.info(f"Set power = ({p1}, {p2})")
             for rep in range(self.repetitions):
-                self.vna.sweep()
-                saver.save_data(self.vna.data, pos=(rep, power_count))
+                data = self.vna.sweep()
+                saver.save_data(data, pos=(rep, power_count))
                 logger.info(f"Frequency sweep repetition {rep+1} / {self.repetitions}")
             if self.vna.is_averaging:
                 self.vna.reset_averaging_count()

@@ -96,8 +96,8 @@ class MS46522B(Instrument):
         self.hold()
 
         slc = MS46522B.HEADER_LENGTH  # start of data slice
-        freqstr = self._handle.query(":sense:frequency:data?")[slc:]
-        freqs = [float(freq) for freq in freqstr.split()]
+        # freqstr = self._handle.query(":sense:frequency:data?")[slc:]
+        # freqs = [float(freq) for freq in freqstr.split()]
 
         datakeys = [f"{s_param}_{trace_fmt}" for s_param, trace_fmt in self._traces]
         data = dict.fromkeys(datakeys)
@@ -106,7 +106,7 @@ class MS46522B(Instrument):
             datastr = self._handle.query(":calculate:data:fdata?")[slc:]
             data[key] = [float(value) for value in datastr.split()]
 
-        return freqs, data
+        return data
 
     def hold(self) -> None:
         """ """
