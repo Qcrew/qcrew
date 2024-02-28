@@ -72,6 +72,12 @@ class MS46522B(Instrument):
         return [f"{s_param}_{trace_format}" for s_param, trace_format in self._traces]
 
     @property
+    def frequencies(self) -> list:
+        """ """
+        freq_str = self.handle.query(":sense:frequency:data?")[VNA.HEADER_LEN :]
+        return [float(freq) for freq in freq_str.split()]
+
+    @property
     def status(self) -> bool:
         """ """
         try:
