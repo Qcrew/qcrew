@@ -106,13 +106,13 @@ class MS46522B(Instrument):
         datakeys = [f"{s_param}_{trace_fmt}" for s_param, trace_fmt in self._traces]
         data = dict.fromkeys(datakeys)
         for count, key in enumerate(datakeys, start=1):
-            self._handle.write(f":calculate:parameter{count}:select")
             data_available = False
             while not data_available:
                 try:
+                    self._handle.write(f":calculate:parameter{count}:select")
                     datastr = self._handle.query(":calculate:data:fdata?")[slc:]
                     data_available = True
-                except SerializeError as e:
+                except:
                     time.sleep(0.5)
             data[key] = [float(value) for value in datastr.split()]
 
