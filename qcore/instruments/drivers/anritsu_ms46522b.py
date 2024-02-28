@@ -4,6 +4,7 @@ import pyvisa
 
 from qcore.instruments.instrument import Instrument, ConnectionError
 
+
 class MS46522B(Instrument):
     """ """
 
@@ -57,6 +58,14 @@ class MS46522B(Instrument):
         """ """
         self._handle.close()
 
+    def configure(self, **config) -> None:
+        """ """
+        self.hold()
+
+        for parameter, value in config.items():
+            if hasattr(self, parameter):
+                setattr(self, parameter, value)
+
     @property
     def status(self) -> bool:
         """ """
@@ -98,6 +107,43 @@ class MS46522B(Instrument):
         """ """
         if not min <= value <= max:
             raise ValueError(f"{key} {value = } out of bounds: [{min}, {max}].")
+
+    def clear_avg(self) -> None:
+        self._handle.write(":sense:average:clear")
+
+    @property
+    def avg_type(self) -> str:
+        return str(self._handle.query(":sense:average:type?"))
+
+    @avg_type.setter
+    def avg_type(self, type: str):
+        if type == "sweep":
+            self._handle.write(":sense:average:type sweepbysweep")
+        elif type == "point":
+            self._handle.write(":sense:average:type pointbypoint")
+        else:
+            raise ValueError(
+                f'Unknown averaging type {type}. Averaging type can only be by "sweep" or "point".'
+            )
+
+    @property
+    def is_averaging(self) -> bool:
+        return bool(self._handle.query(":sense:average:state?"))
+
+    @is_averaging.setter
+    def is_averaging(self, turn_on: bool):
+        if turn_on:
+            self._handle.write(":sense:average:state 1")
+        else:
+            self._handle.write(":sense:average:state 0")
+
+    @property
+    def avg_count(self) -> int:
+        return int(self._handle.query(":sense:average:count?"))
+
+    @avg_count.setter
+    def avg_count(self, count: int):
+        self._handle.write(f":sense:average:count {count}")
 
     @property
     def fcenter(self) -> float:
