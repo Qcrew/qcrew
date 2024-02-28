@@ -162,9 +162,9 @@ class VNAExperiment:
         """ """
         if self._filepath is None:
             date, time = datetime.now().strftime("%Y-%m-%d %H-%M-%S").split()
-            datafolder = self._folder / "data"
+            datafolder = self._folder / "data" / date
             datafolder.mkdir(exist_ok=True)
-            folderpath = datafolder / date
+            folderpath = datafolder
             filename = f"{time}_VNA_sweep_{self.vna.fcenter}_{self.powers}pow_{self.repetitions}reps.hdf5"
             self._filepath = folderpath / filename
             logger.debug(f"Generated filepath {self._filepath}")
