@@ -1,7 +1,7 @@
 """ Python driver for Anritsu VNA MS46522B """
 
 import pyvisa
-
+import time
 from qcore.instruments.instrument import Instrument, ConnectionError
 from qcore.helpers.logger import logger
 
@@ -92,23 +92,20 @@ class MS46522B(Instrument):
 
     def sweep(self) -> tuple[list[float], dict[str, list[float]]]:
         """ """
-        logger.info("Doing sweep ...")
         self._handle.write(":trigger:single")  # trigger single sweep
-        logger.info("Rescaling traces...")
         self._handle.write(":display:window:y:auto")  # auto-scale all traces
         self.hold()
-        logger.info("Done with sweep, retrieving info...")
 
         slc = MS46522B.HEADER_LENGTH  # start of data slice
         # freqstr = self._handle.query(":sense:frequency:data?")[slc:]
         # freqs = [float(freq) for freq in freqstr.split()]
 
+        time.sleep(0.5)
+
         datakeys = [f"{s_param}_{trace_fmt}" for s_param, trace_fmt in self._traces]
         data = dict.fromkeys(datakeys)
         for count, key in enumerate(datakeys, start=1):
-            logger.info(f"Setting param to {count}...")
             self._handle.write(f":calculate:parameter{count}:select")
-            logger.info("Querying data...")
             datastr = self._handle.query(":calculate:data:fdata?")[slc:]
             data[key] = [float(value) for value in datastr.split()]
 
