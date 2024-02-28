@@ -1,7 +1,10 @@
 """ Python driver for Anritsu VNA MS46522B """
 
-import pyvisa
 import time
+
+import pyvisa
+from Pyro5.errors import SerializeError
+
 from qcore.instruments.instrument import Instrument, ConnectionError
 from qcore.helpers.logger import logger
 
@@ -100,13 +103,17 @@ class MS46522B(Instrument):
         # freqstr = self._handle.query(":sense:frequency:data?")[slc:]
         # freqs = [float(freq) for freq in freqstr.split()]
 
-        time.sleep(0.5)
-
         datakeys = [f"{s_param}_{trace_fmt}" for s_param, trace_fmt in self._traces]
         data = dict.fromkeys(datakeys)
         for count, key in enumerate(datakeys, start=1):
             self._handle.write(f":calculate:parameter{count}:select")
-            datastr = self._handle.query(":calculate:data:fdata?")[slc:]
+            data_available = False
+            while not data_available:
+                try:
+                    datastr = self._handle.query(":calculate:data:fdata?")[slc:]
+                    data_available = True
+                except SerializeError as e:
+                    time.sleep(0.5)
             data[key] = [float(value) for value in datastr.split()]
 
         return data
