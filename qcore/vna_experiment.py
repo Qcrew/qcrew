@@ -167,5 +167,5 @@ class VNAExperiment:
             folderpath = datafolder / date
             filename = f"{time}_VNA_sweep_{self.vna.fcenter}_{self.powers}pow_{self.repetitions}reps.hdf5"
             self._filepath = folderpath / filename
-            logger.debug(f"Generated filepath {self._filepath} for '{self.name}'")
+            logger.debug(f"Generated filepath {self._filepath}")
         return self._filepath
