@@ -93,7 +93,7 @@ class MS46522B(Instrument):
         """ """
         self._handle.write(":trigger:single")  # trigger single sweep
         self._handle.write(":display:window:y:auto")  # auto-scale all traces
-        self.hold()
+        # self.hold()
 
         slc = MS46522B.HEADER_LENGTH  # start of data slice
         # freqstr = self._handle.query(":sense:frequency:data?")[slc:]
