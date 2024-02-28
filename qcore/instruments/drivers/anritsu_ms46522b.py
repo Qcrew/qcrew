@@ -74,7 +74,7 @@ class MS46522B(Instrument):
     @property
     def frequencies(self) -> list:
         """ """
-        freq_str = self.handle.query(":sense:frequency:data?")[VNA.HEADER_LEN :]
+        freq_str = self.handle.query(":sense:frequency:data?")[MS46522B.HEADER_LEN :]
         return [float(freq) for freq in freq_str.split()]
 
     @property
