@@ -67,6 +67,11 @@ class MS46522B(Instrument):
                 setattr(self, parameter, value)
 
     @property
+    def datakeys(self):
+        """ """
+        return [f"{s_param}_{trace_format}" for s_param, trace_format in self._traces]
+
+    @property
     def status(self) -> bool:
         """ """
         try:
