@@ -417,12 +417,15 @@ class Experiment:
         datasaver = Datasaver(self._filepath, *self.datasets.values())
 
         to_plot = [dset for dset in self.datasets.values() if dset.plot]
-        plotter = Plotter(self.fetch_interval, self.name, self._filepath, *to_plot)
+        if len(to_plot) > 0:
+            plotter = Plotter(self.fetch_interval, self.name, self._filepath, *to_plot)
+        else:
+            plotter = None
 
         with datasaver:
             datasaver.save_metadata(self.metadata)
             while self._qm.is_processing():
-                if plotter.stop_expt:
+                if plotter and plotter.stop_expt:
                     break
 
                 # fetch latest batch of partial data along with data counts
@@ -465,7 +468,8 @@ class Experiment:
                     for name, dataset in dsets_to_save.items():
                         datasaver.save_data(dataset)
 
-                plotter.plot(message=plot_msg)  # update live plot
+                if plotter:
+                    plotter.plot(message=plot_msg)  # update live plot
 
                 time.sleep(self.fetch_interval)
 
@@ -473,10 +477,11 @@ class Experiment:
             logger.info(f"{self.name} experiment has stopped running!")
 
             # plot final data batch and stop plotting loop
-            if exit_plotter:
-                plotter.plot(message=f"{plot_msg} [DONE]", stop=True, exit=True)
-            else:
-                plotter.plot(message=f"{plot_msg} [DONE]", stop=True)
+            if plotter:
+                if exit_plotter:
+                    plotter.plot(message=f"{plot_msg} [DONE]", stop=True, exit=True)
+                else:
+                    plotter.plot(message=f"{plot_msg} [DONE]", stop=True)
 
     def process_data(self, data, prev_count, incoming_count, qcore_sweep_point):
         """Subclass(es) to implement process_data()"""
