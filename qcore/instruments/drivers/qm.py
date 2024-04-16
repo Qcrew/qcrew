@@ -1,18 +1,21 @@
 """ """
 
+import json
 import numpy as np
 
 from qm.QuantumMachine import QuantumMachine
 from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.QmJob import QmJob
 from qm.qua._dsl import _ProgramScope
-
+from qm.octave import QmOctaveConfig
+from qcore.instruments.drivers.qm_octave_setter import OctaveUnit, octave_declaration
 from qcore.helpers.logger import logger
 from qcore.instruments.instrument import Instrument, ConnectionError
 from qcore.instruments.drivers.qm_config_builder import QMConfigBuilder, QMConfig
 from qcore.instruments.drivers.qm_result_fetcher import QMResultFetcher
 from qcore.instruments.drivers.vaunix_lms import LMS
-from qcore.instruments.drivers.qm_octave_dummy import DummyOctave
+from qcore.instruments.drivers.qm_octave_dummy import Octave
+from qcore.instruments.drivers.qm_opx_plus_dummy import OPXPlus
 from qcore.modes.mode import Mode
 
 
@@ -22,7 +25,10 @@ class QM(Instrument):
     QMM_PORT: int = 9510  # this works but 80 does not
 
     def __init__(
-        self, modes: tuple[Mode] = None, oscillators: tuple[LMS] = None
+        self,
+        modes: tuple[Mode] = None,
+        oscillators: tuple[LMS] = None,
+        opx_plus: OPXPlus = None,
     ) -> None:
         """ """
         self._status: bool = None
@@ -38,6 +44,8 @@ class QM(Instrument):
         self._job: QmJob = None
         self._qrf: QMResultFetcher = None
 
+        self._opx_plus = opx_plus
+
         super().__init__(id=None, name="QM")
 
     def __repr__(self) -> str:
@@ -49,17 +57,61 @@ class QM(Instrument):
         if self._qmm is not None:
             self.disconnect()
         try:
-            self._qmm = QuantumMachinesManager(port=QM.QMM_PORT)
+            if self.requires_octave():
+                if self.uses_opx_plus():
+                    self._connect_to_opx_plus_and_octave()
+                else:
+                    raise NotImplementedError()
+            else:
+                if self.uses_opx_plus():
+                    self._connect_to_opx_plus()
+                else:
+                    self._connect_to_opx_one()
         except Exception as err:
             raise ConnectionError(f"Failed to connect QM. Details: {err}.") from None
         else:
             self._status = True
             if self._modes is not None and self._oscillators is not None:
-                self.open(self._modes, self._oscillators)
+                self.open(self._modes, self._oscillators, self._opx_plus)
 
-    def open(self, modes: tuple[Mode], oscillators: tuple[LMS]) -> QuantumMachine:
+    def _connect_to_opx_plus_and_octave(self):
+        octave_config = self._make_octave_config()
+        self._connect_to_opx_plus(octave_config)
+
+    def _connect_to_opx_plus(self, octave_config=None):
+        self._qmm = QuantumMachinesManager(
+            host=self._opx_plus.id,
+            port=None,
+            cluster_name=self._opx_plus.cluster_name,
+            octave=octave_config,
+        )
+
+    def _connect_to_opx_one(self):
+        self._qmm = QuantumMachinesManager(port=QM.QMM_PORT)
+
+    def _make_octave_config(self) -> QmOctaveConfig:
+        octaves = []
+        for name, octave in self.get_octaves().items():
+            octaves.append(OctaveUnit(name, octave.id, port=octave.port, con="con1"))
+
+        octave_calibration_db_paths = set(
+            [octave.calibration_db_path for octave in self.get_octaves().values()]
+        )
+        assert (
+            len(octave_calibration_db_paths) == 1
+        ), "Currently support only one calibration_db"
+
+        octave_config = octave_declaration(
+            octaves, calibration_db_path=octave_calibration_db_paths.pop()
+        )
+
+        return octave_config
+
+    def open(
+        self, modes: tuple[Mode], oscillators: tuple[LMS], opx_plus: OPXPlus = None
+    ) -> QuantumMachine:
         """ """
-        self._config = self._qcb.build_config(modes, oscillators)
+        self._config = self._qcb.build_config(modes, oscillators, opx_plus)
         self._qm = self._qmm.open_qm(self._config, close_other_machines=True)
         return self._qm
 
@@ -100,4 +152,18 @@ class QM(Instrument):
 
     def set_output_dc_offset_by_element(self, element: str, input: str, offset: float):
         """ """
-        self._qm.set_output_dc_offset_by_element(element, input, offset) 
+        self._qm.set_output_dc_offset_by_element(element, input, offset)
+
+    def requires_octave(self) -> bool:
+        octaves = self.get_octaves()
+        return len(octaves) > 0
+
+    def get_octaves(self) -> dict[str, Octave]:
+        octaves = {}
+        for oscillator in self._oscillators:
+            if "octave" in oscillator.name:
+                octaves[oscillator.name] = oscillator
+        return octaves
+
+    def uses_opx_plus(self) -> bool:
+        return self._opx_plus is not None

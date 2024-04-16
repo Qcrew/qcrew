@@ -5,17 +5,52 @@ from qcore.instruments.instrument import Instrument
 from qcore.variables.parameter import Parameter
 
 
-class DummyOctave(Instrument):
+class Octave(Instrument):
+    """Dummy instrument containing relevant information for connecting to an Octave."""
 
     settings: dict = Parameter()
+    # uses_opx_plus: bool = Parameter()
+    calibration_db_path: str = Parameter()
+    port: int = Parameter()
 
-    def __init__(self, settings: dict, id: str, **parameters):
+    def __init__(
+        self,
+        settings: dict,
+        # uses_opx_plus: bool,
+        calibration_db_path: str,
+        port: int,
+        id: str,
+        **parameters
+    ):
         self._settings = settings
+        # self._uses_opx_plus = uses_opx_plus
+        self._calibration_db_path = calibration_db_path
+        self._port = port
         super().__init__(id, **parameters)
 
     @property
     def status(self) -> bool:
         return True
+
+    @calibration_db_path.setter
+    def calibration_db_path(self, value: str) -> None:
+        """ """
+        self.calibration_db_path = value
+
+    @calibration_db_path.getter
+    def calibration_db_path(self) -> bool:
+        """ """
+        return self._calibration_db_path
+
+    # @uses_opx_plus.getter
+    # def uses_opx_plus(self) -> bool:
+    #     """ """
+    #     return self._uses_opx_plus
+
+    # @uses_opx_plus.setter
+    # def uses_opx_plus(self, value: bool) -> None:
+    #     """ """
+    #     self._uses_opx_plus = value
 
     @settings.getter
     def settings(self) -> dict:
@@ -27,15 +62,18 @@ class DummyOctave(Instrument):
         """ """
         self._settings = value
 
+    @port.getter
+    def port(self) -> int:
+        """ """
+        return self._port
+
+    @port.setter
+    def port(self, value: int) -> None:
+        """ """
+        self._port = value
+
     def connect(self) -> None:
-        # # Note: port 80 should be replaced if Octave is on external network
-        # #  i.e., replaced with 11XXX where XXX are the last 3 digits of the
-        # #  octave IP address behind the router. e.g. if the octave is
-        # #  XXX.XXX.XX.50, the port would be 11050.
-        # self._octave = OctaveUnit(self.name, self.id, port=80, con="con1")
-        # # Add the octaves
-        # octaves = [self._octave]
-        # # Configure the Octaves
-        # self._config = octave_declaration(octaves)
         pass
 
+    def disconnect(self) -> None:
+        pass

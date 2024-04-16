@@ -15,7 +15,7 @@ from qcore.resource import Resource
 class Mode(Resource):
     """ """
 
-    PORTS_KEYS = ("I", "Q")
+    PORTS_KEYS = ("I", "Q", "out1", "out2")
     OFFSETS_KEYS = (*PORTS_KEYS, "G", "P")
     RF_SWITCH_DIGITAL_MARKER = "RFSWITCH_ON"
 

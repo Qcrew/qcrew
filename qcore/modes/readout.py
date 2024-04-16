@@ -12,8 +12,9 @@ from qcore.helpers.logger import logger
 class Readout(Mode):
     """ """
 
-    PORTS_KEYS = (*Mode.PORTS_KEYS, "out")
-    OFFSETS_KEYS = (*Mode.OFFSETS_KEYS, "out")
+    # out1 and out2 have been added to enable I AND Q input to the OPX
+    PORTS_KEYS = (*Mode.PORTS_KEYS, "out", "out1", "out2")
+    OFFSETS_KEYS = (*Mode.OFFSETS_KEYS, "out", "out1", "out2")
 
     DEMOD_METHOD_MAP = {
         "sliced": qua.demod.sliced,
@@ -48,7 +49,6 @@ class Readout(Mode):
     ) -> None:
         """ """
         op_name = self._pulse_op_map[pulse.name]
-
         try:
             num_ampxs = len(ampx)
             if num_ampxs != 4:
@@ -69,6 +69,9 @@ class Readout(Mode):
             if demod_type == "full":
                 output_i, output_q = ("cos", var_i), ("sin", var_q)
                 demod_i, demod_q = qua.demod.full(*output_i), qua.demod.full(*output_q)
+            elif demod_type == "dual":
+                demod_i = qua.dual_demod.full("cos", "out1", "sin", "out2", var_i)
+                demod_q = qua.dual_demod.full("minus_sin", "out1", "cos", "out2", var_q)
             else:
                 try:
                     demod_method = self.DEMOD_METHOD_MAP[demod_type]
@@ -84,3 +87,29 @@ class Readout(Mode):
                 qua.measure(op_name * qua.amp(ampx), self.name, None, demod_i, demod_q)
             else:
                 qua.measure(op_name * qua.amp(*ampx), self.name, None, demod_i, demod_q)
+
+    def iw_training_measure(
+        self,
+        pulse: Pulse,
+        division_length: int,
+        targets: tuple = None,
+        ampx=1.0,
+    ) -> None:
+
+        op_name = self._pulse_op_map[pulse.name]
+        var_ii, var_iq, var_qi, var_qq = targets
+
+        demod_ii = qua.demod.sliced("cos", var_ii, division_length, "out1")
+        demod_iq = qua.demod.sliced("sin", var_iq, division_length, "out2")
+        demod_qi = qua.demod.sliced("minus_sin", var_qi, division_length, "out1")
+        demod_qq = qua.demod.sliced("cos", var_qq, division_length, "out2")
+
+        qua.measure(
+            op_name * qua.amp(ampx),
+            self.name,
+            None,
+            demod_ii,
+            demod_iq,
+            demod_qi,
+            demod_qq,
+        )

@@ -7,11 +7,11 @@ class OctaveUnit:
     """Class for keeping track of OctavesSettings in inventory."""
 
     def __init__(
-            self,
-            name: str,
-            ip: str,
-            port: int,
-            con: str = "con1",
+        self,
+        name: str,
+        ip: str,
+        port: int,
+        con: str = "con1",
     ):
         """Class for keeping track of OctavesSettings in inventory.
 
@@ -26,19 +26,25 @@ class OctaveUnit:
         self.con = con
 
 
-def octave_declaration(octaves: list = ()):
+def octave_declaration(octaves: list = (), calibration_db_path: str = None):
     """
     Initiate octave_config class, set the calibration file and add octaves info.
 
     :param octaves: objects that holds the information about octave's name, the controller that is connected to this octave, octave's ip and octave's port.
     """
     octave_config = QmOctaveConfig()
-    octave_config.set_calibration_db(os.getcwd())
+    if calibration_db_path is None:
+        octave_config.set_calibration_db(os.getcwd())
+    else:
+        octave_config.set_calibration_db(calibration_db_path)
+
     for i in range(len(octaves)):
         if octaves[i].name is None:
             raise TypeError(f"Please insert the octave name for the {i}'s octave")
         if octaves[i].con is None:
-            raise TypeError(f"Please insert the controller that is connected to the {i}'s octave")
+            raise TypeError(
+                f"Please insert the controller that is connected to the {i}'s octave"
+            )
         if octaves[i].ip is None:
             raise TypeError(f"Please insert the octave ip for the {i}'s octave")
         if octaves[i].port is None:

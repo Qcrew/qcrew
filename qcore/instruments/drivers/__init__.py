@@ -1,4 +1,6 @@
 from qcore.instruments.drivers.anritsu_ms46522b import MS46522B
+from qcore.instruments.drivers.qm_octave_dummy import Octave
+from qcore.instruments.drivers.qm_opx_plus_dummy import OPXPlus
 from qcore.instruments.drivers.qm import QM
 from qcore.instruments.drivers.signalcore_sc5503b import SC5503B
 from qcore.instruments.drivers.signalcore_sc5511a import SC5511A

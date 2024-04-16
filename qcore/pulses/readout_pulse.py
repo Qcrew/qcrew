@@ -10,6 +10,14 @@ from qcore.pulses.gaussian_pulse import GaussianPulse
 from qcore.pulses.digital_waveform import DigitalWaveform
 from qcore.pulses.pulse import Pulse
 
+# Integration weight dictionary
+IW = dict[str, list]
+
+# cos and sin integration weight tuple
+CosSinWeightTuple = tuple[float, float, float, float]
+# cos, sin and -sin integration weight tuple (used for dual-demodulation)
+CosSinMinusSinWeightTuple = tuple[float, float, float, float, float, float]
+
 
 class ReadoutPulse(Pulse):
     """ """
@@ -17,7 +25,14 @@ class ReadoutPulse(Pulse):
     def __init__(
         self,
         name: str,
-        weights: Union[tuple[float, float, float, float], str] = (1.0, 0.0, 0.0, 1.0),
+        weights: Union[CosSinWeightTuple, CosSinMinusSinWeightTuple, str] = (
+            1.0,
+            0.0,  # cos
+            0.0,
+            1.0,  # sin
+            0.0,
+            -1.0,  # minus_sin
+        ),
         threshold: Union[float, None] = None,  # not None only for Optimized weights
         **parameters,
     ) -> None:
@@ -37,17 +52,28 @@ class ReadoutPulse(Pulse):
         except TypeError:
             return False
 
-    def sample_integration_weights(self) -> tuple[dict[str, list], dict[str, list]]:
+    def sample_integration_weights(self) -> tuple[IW, IW, IW]:
         """ """
+        minus_sin_weights = {"cosine": 0.0, "sine": -1.0}
         if self.has_optimized_weights:
             weights = np.load(self.weights)
             cos_weights = {"cosine": weights["I"][0], "sine": weights["I"][1]}
             sin_weights = {"cosine": weights["Q"][0], "sine": weights["Q"][1]}
+            if "Q_Minus" in weights:
+                # required for dual-demodulation
+                minus_sin_weights = {
+                    "cosine": weights["Q_Minus"][0],
+                    "sine": weights["Q_Minus"][1],
+                }
         else:
             weights = [[(weight, self.total_length)] for weight in self.weights]
             cos_weights = {"cosine": weights[0], "sine": weights[1]}
             sin_weights = {"cosine": weights[2], "sine": weights[3]}
-        return (cos_weights, sin_weights)
+            if len(weights) >= 6:
+                # required for dual-demodulation
+                minus_sin_weights = {"cosine": weights[4], "sine": weights[5]}
+
+        return cos_weights, sin_weights, minus_sin_weights
 
 
 class ConstantReadoutPulse(ConstantPulse, ReadoutPulse):

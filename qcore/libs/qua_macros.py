@@ -2,7 +2,7 @@
 
 from qm import qua
 from qm.qua.lib import Cast
-from qm.qua._dsl import _Variable
+from qm.qua._dsl import _Variable, _Expression
 
 from qcore.helpers.logger import logger
 
@@ -15,7 +15,7 @@ def align(*modes):
 def wait(duration: float, *modes):
     """duration to be supplied in nanoseconds and is converted to clock cycles"""
     logger.warning("Wait times will be rounded to nearest multiple of 4 nanoseconds.")
-    if isinstance(duration, _Variable):
+    if isinstance(duration, _Variable) or isinstance(duration, _Expression):
         qua.wait(Cast.to_int(duration / 4), *(mode.name for mode in modes))
     else:
         qua.wait(int(duration / 4), *(mode.name for mode in modes))
