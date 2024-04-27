@@ -10,6 +10,7 @@ class APUASYN20(Instrument):
     def __init__(
         self,
         id: str,
+        name: str,
         channel: int = 1,
         frequency: float = 0.0,
         phase: float = 0.0,
@@ -20,6 +21,7 @@ class APUASYN20(Instrument):
         self._handle: pyvisa.resource.Resource = None
         super().__init__(
             id=id,
+            name=name,
             channel=channel,
             frequency=frequency,
             phase=phase,
