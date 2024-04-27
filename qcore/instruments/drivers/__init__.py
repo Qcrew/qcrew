@@ -5,3 +5,4 @@ from qcore.instruments.drivers.signalcore_sc5511a import SC5511A
 from qcore.instruments.drivers.signalhound_sa124 import SA124
 from qcore.instruments.drivers.vaunix_lms import LMS
 from qcore.instruments.drivers.yokogawa_gs200 import GS200
+from qcore.instruments.drivers.anapico_apuasyn20 import APUASYN20
