@@ -1,5 +1,6 @@
 """ python threading """
 
+import os
 import threading
 import time
 
@@ -8,6 +9,7 @@ import pyqtgraph as pg
 from pyqtgraph.exporters import ImageExporter
 from PyQt6 import QtCore as qtc
 from PyQt6 import QtWidgets as qtw
+from PyQt6.QtGui import QIcon
 
 from qcore.helpers.logger import logger
 from qcore.variables.datasets import Dataset
@@ -77,6 +79,7 @@ class PlotSpec:
             elif self.plot_type == "image":
                 plot_data_item = pg.ImageItem()
                 cmap = dataset.plot_args.get("cmap", "viridis")
+                cmap = pg.colormap.get(cmap, source="matplotlib")
                 self.cbar = self.plot_item.addColorBar(
                     plot_data_item, colorMap=cmap, interactive=False
                 )
@@ -211,6 +214,8 @@ class Plotter:
         self.layout = PlotWidget(filename=self.filename, show=True)
         self.layout.showMaximized()
         self.layout.setWindowTitle("Qcore plotter")
+        dirname = os.path.dirname(__file__)
+        self.layout.setWindowIcon(QIcon(os.path.join(dirname, "qcrew.png")))
 
         self.plotspec: dict[Dataset, PlotSpec] = {d: PlotSpec(d) for d in self.datasets}
 

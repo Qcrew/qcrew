@@ -4,6 +4,7 @@ from datetime import datetime
 
 from contextlib import ExitStack
 from pathlib import Path
+import ctypes
 import time
 
 import qm.qua as qua
@@ -336,6 +337,11 @@ class Experiment:
 
     def run(self):
         """ """
+        # to change the icon in the taskbar
+        myappid = u"qcrew.qcore.plotter"
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            myappid
+        )
         outermost_sweep = list(self.sweeps.values())[0]
         try:
             if not outermost_sweep.is_qua_sweep:
