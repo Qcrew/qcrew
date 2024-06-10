@@ -81,10 +81,10 @@ class GS200(Instrument):
             start = self.current
 
         if start > stop:  # ramp down
-            points = np.arange(stop, start + step / 2, step)[::-1]  # include endpoint
+            points = np.arange(stop, start, step)[::-1]  # include endpoint
         else:  # ramp up
-            points = np.arange(start, stop + step / 2, step)
-
+            points = np.arange(start, stop, step)
+        points = np.concatenate(points, [stop])  # ensures that last point is included
         for point in points:
             self.current = point
             time.sleep(GS200.WAIT_TIME)
