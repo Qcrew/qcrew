@@ -171,6 +171,51 @@ def exp_decay_sine(y, x):
     return result.best_fit, result.best_values
 
 
+def char_func_coh_state_2(y,x):
+    def fn(x, amp, alpha, ofs):
+        scale = 2
+        return amp * np.exp(-np.abs(x*scale)**2 / 2) * np.cos(2 * alpha * x*scale) + ofs
+    
+    def params(y,x):
+        ofs = (y[0] + y[-1]) / 2
+        peak_idx = np.argmax(abs(y - ofs))
+        yrange = np.max(y) - np.min(y)
+        ofs_min, ofs_max = np.min(y) - 0.3 * yrange, np.max(y) + 0.3 * yrange
+        return create_params(
+            ofs={"value": ofs, "min": ofs_min, "max": ofs_max},
+            amp={"value": y[peak_idx] - ofs, "min": -3 * yrange- ofs, "max": 3 * yrange- ofs},
+            alpha = 1.8,
+        )
+    
+    
+    result = Model(fn).fit(y, params(y, x), x=x)
+    return result.best_fit, result.best_values
+
+def T1_coh(y, x):
+    def fn(x, amp, ofs, tau):
+        scale = 2
+        alpha = 2
+        beta = -0.4
+        chi = 2*np.pi *35.4e-6
+        kappa = 2*np.pi/tau
+        return np.real(amp * np.exp(-np.abs(beta*scale)**2 / 2) * np.cos(2 * beta* alpha *scale * np.exp(-0.5*(1j*chi+kappa)*x) ) + ofs)
+    
+    def params(y,x):
+        ofs = (y[0] + y[-1]) / 2
+        peak_idx = np.argmax(abs(y - ofs))
+        yrange = np.max(y) - np.min(y)
+        ofs_min, ofs_max = np.min(y) - 0.3 * yrange, np.max(y) + 0.3 * yrange
+        tau_guess = (x[-1] - x[0]) / 5
+        return create_params(
+            ofs={"value": ofs, "min": ofs_min, "max": ofs_max},
+            amp={"value": y[peak_idx] - ofs, "min": -3 * yrange- ofs, "max": 3 * yrange- ofs},
+            tau={"value": tau_guess, "min":0, "max":5 * x[-1]},
+        )
+    
+    
+    result = Model(fn).fit(y, params(y, x), x=x)
+    return result.best_fit, result.best_values
+
 def gaussian(y, x):
     """ """
 
@@ -290,6 +335,7 @@ def lorentzian_asymmetric(y, x):
 
 
 def sine(y, x, return_params=False):
+    
     """ """
 
     def fn(x, f0, ofs, amp, phi):
@@ -314,6 +360,34 @@ def sine(y, x, return_params=False):
         return fit_params
     result = Model(fn).fit(y, fit_params, x=x)
     return result.best_fit, result.best_values
+
+
+def sine_gf(y, x, return_params=False):
+    
+    def fn(x, f0, ofs, amp, phi):
+        return ofs + amp * np.sin(2*np.pi*f0*x**2 + phi)
+    
+    
+    def params(y, x):
+        """ """
+        fs = np.fft.rfftfreq(len(x), x[1] - x[0])
+        ofs = np.mean(y)
+        fft = np.fft.rfft(y - ofs)
+        idx = np.argmax(abs(fft))
+        
+        return create_params(
+            f0={"value": fs[idx], "min": fs[0], "max": fs[-1]},
+            ofs={"value": ofs, "min": np.min(y), "max": np.max(y)},
+            amp={"value": np.std(y - ofs), "min": 0, "max": np.max(y) - np.min(y)},
+            phi={"value": np.angle(fft[idx]), "min": -2 * np.pi, "max": 2 * np.pi},
+        )
+    
+    fit_params = params(y, x)
+    if return_params:
+        return fit_params
+    result = Model(fn).fit(y, fit_params, x=x)
+    return result.best_fit, result.best_values
+        
 
 
 FITFN_MAP = {
