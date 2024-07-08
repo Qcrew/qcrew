@@ -16,14 +16,14 @@ class Pulse(Resource):
     def __init__(
         self,
         name: str,
-        length: int,
+        length: Union[None, int],
         I_ampx: float,
         Q_ampx: Union[None, float],  # set None for single waveform pulses
         pad: int,
         digital_marker: Union[DigitalWaveform, None] = None,
         **parameters,
     ) -> None:
-        """ """
+        """ """        
         self.length: int = length
         self.pad: int = pad
 

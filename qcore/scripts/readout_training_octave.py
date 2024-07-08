@@ -11,13 +11,8 @@ from qcore.helpers.logger import logger
 from qcore.modes.mode import Mode
 from qcore.libs.fit_fns import gaussian2d_symmetric
 
-from qualang_tools.config.integration_weights_tools import convert_integration_weights
 
-ADC_TO_VOLTS = 2**-12
-DIVISION_LEN = 10
-TS = 1e-9  # Sampling time of the OPX in seconds
-T_OFS = 36.46
-
+DIVISION_LEN = 16
 
 class ReadoutTrainerOctave:
     """ """
@@ -218,23 +213,30 @@ class ReadoutTrainerOctave:
         #         np.real(-squeezed_diff).tolist(),
         #     ]
         # )
+        # print(np.real(squeezed_diff).tolist())
+        # print(np.imag(squeezed_diff).tolist())
+        opt_weights_real = np.real(squeezed_diff)
+        opt_weights_minus_real = -1 * np.real(squeezed_diff)
+        opt_weights_imag = np.imag(squeezed_diff)
+        opt_weights_minus_imag = -1 * np.imag(squeezed_diff)
+
         weights["I"] = np.array(
             [
-                convert_integration_weights(np.real(squeezed_diff).tolist()),
-                convert_integration_weights(np.imag(-squeezed_diff).tolist()),
+                opt_weights_real.tolist(),
+                opt_weights_minus_imag.tolist(),
             ]
         )
         weights["Q"] = np.array(
             [
-                convert_integration_weights(np.imag(squeezed_diff).tolist()),
-                convert_integration_weights(np.real(squeezed_diff).tolist()),
+                opt_weights_imag.tolist(),
+                opt_weights_real.tolist(),
             ]
         )
 
         weights["Q_Minus"] = np.array(
             [
-                convert_integration_weights(np.imag(-squeezed_diff).tolist()),
-                convert_integration_weights(np.real(-squeezed_diff).tolist()),
+                opt_weights_minus_imag.tolist(),
+                opt_weights_minus_real.tolist(),
             ]
         )
 

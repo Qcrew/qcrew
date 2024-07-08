@@ -10,6 +10,7 @@ from qcore.instruments.drivers.qm_octave_dummy import Octave
 from qcore.instruments.drivers.qm_opx_plus_dummy import OPXPlus
 from qcore.modes.mode import Mode
 from qcore.modes.readout import Readout
+from qcore.modes.rf_switch import RFSwitch
 from qcore.helpers.logger import logger
 from qcore.instruments.drivers.vaunix_lms import LMS
 from qcore.pulses.digital_waveform import DigitalWaveform
@@ -238,6 +239,12 @@ class QMConfig(defaultdict):
         else:
             raise ValueError(f"Invalid port {key = } and {number = } for {mode}.")
         logger.debug(f"Set '{mode.name}' port {key = } and {number = }.")
+
+        if mode.rf_switch_on:
+            rf_switch_config = mode_config["digitalInputs"]["switch"]
+            rf_switch_config["port"] = (self.CONTROLLER_NAME, mode.rf_switch.port)
+            rf_switch_config["buffer"] = mode.rf_switch.buffer
+            rf_switch_config["delay"] = mode.rf_switch.delay
 
     def set_mode_output_port_octave(self, mode: Mode, number: int):
         self["elements"][mode.name]["RF_outputs"]["port"] = (
