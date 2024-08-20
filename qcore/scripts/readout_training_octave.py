@@ -468,10 +468,10 @@ class ReadoutTrainerOctave:
         readout_pulse.threshold = threshold
 
     def _calculate_confusion_matrix(self, Ig_list, Ie_list, threshold):
-        pgg = 100 * round((np.sum(Ig_list > threshold) / len(Ig_list)), 3)
-        pge = 100 * round((np.sum(Ig_list < threshold) / len(Ig_list)), 3)
-        pee = 100 * round((np.sum(Ie_list < threshold) / len(Ie_list)), 3)
-        peg = 100 * round((np.sum(Ie_list > threshold) / len(Ie_list)), 3)
+        pgg = 100 * round((np.sum(Ig_list < threshold) / len(Ig_list)), 3)
+        pge = 100 * round((np.sum(Ig_list > threshold) / len(Ig_list)), 3)
+        pee = 100 * round((np.sum(Ie_list > threshold) / len(Ie_list)), 3)
+        peg = 100 * round((np.sum(Ie_list < threshold) / len(Ie_list)), 3)
         print("\nState prepared in |g>")
         print(f"   Measured in |g>: {pgg}%")
         print(f"   Measured in |e>: {pge}%")
