@@ -157,6 +157,12 @@ class Mode(Resource):
 
     def add_operations(self, *operations: Pulse) -> None:
         """ """
+        if self._rf_switch is not None:
+            for operation in operations:
+                if not isinstance(operations, ReadoutPulse):
+                    marker = DigitalWaveform(self.RF_SWITCH_DIGITAL_MARKER)
+                    operation.digital_marker = marker
+
         self.operations = [*self._operations.values(), *operations]
 
     def remove_operations(self, *names: str) -> None:
@@ -190,10 +196,12 @@ class Mode(Resource):
             qua.frame_rotation_2pi(phase, self.name)
         elif phase:
             qua.frame_rotation_2pi(phase, self.name)
+
         if num_ampxs == 1:
             qua.play(op_name * qua.amp(ampx), self.name, **kwargs)
         else:
             qua.play(op_name * qua.amp(*ampx), self.name, **kwargs)
+            
         if isinstance(phase, _Variable):
             qua.frame_rotation_2pi(phase, self.name)
         elif phase:
